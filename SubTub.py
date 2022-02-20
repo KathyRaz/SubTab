@@ -7,16 +7,35 @@ from IPython.display import display
 from associations_rules_summary.utils_code import color_and_hover_summary, project_summary_on_ar
 from word2vec_embedding.utils_w2v import data_transformation, create_summary_for_filtered_dataset, \
     create_tab_vec_with_emb, create_summary, create_summary_for_filtered_dataset_memory
-from word2vec_embedding.general import gen_model_uuid, gen_dir
 from metrics import jaccard_metric, cell_coverage_counting
 import random
 import ast
+import uuid
+import os
+
+BASE_DIR = "models/"
 
 
-def get_moc(kind_of_df):
-    from demo.demo_moc import dict_df
-    dict_moc = dict_df[kind_of_df]
-    return dict_moc
+def gen_model_uuid(label=None):
+    uu = uuid.uuid4().hex
+    # os.path.join(
+    # os.mkdir(uu)
+    if label:
+        return f"{uu}_{label}"
+    else:
+        return uu
+
+
+def gen_dir(model_uuid, added, base_dir='None'):
+    #    base_dir=utils.config.BASE_DIR
+    if base_dir == 'None':
+        base_dir = BASE_DIR
+
+    new_dir = os.path.join(base_dir, model_uuid, added)
+    if not os.path.isdir(new_dir):
+        os.makedirs(new_dir)
+    return new_dir
+
 
 
 def create_filtered_rules_per_row(summary, rules, mapping_bins_to_values):
