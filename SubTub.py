@@ -159,7 +159,7 @@ def create_dict_patterns(summary, rules, mapping_bins_to_values, df):
     return dict_patterns
 
 
-class Subtub:
+class subTub:
     """
     the class that holds SubTub instance. It load a dataframe, creates a binning transformation, and then creates
     embedding based on the requested method. it stores the columns and rows vectors. it has a function of display to
