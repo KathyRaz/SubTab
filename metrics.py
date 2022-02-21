@@ -8,8 +8,6 @@ from itertools import chain
 from associations_rules_summary.utils_code import *
 from Random_baselines.random_util import *
 
-with open(r"config.json") as json_data_file:
-    config_params: dict = json.load(json_data_file)
 
 import json
 
