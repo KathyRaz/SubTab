@@ -1,0 +1,8 @@
+﻿efficient-apriori
+gensim
+Jinja2
+numpy
+pandas
+scikit-learn
+scipy
+tqdm
