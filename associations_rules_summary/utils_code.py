@@ -50,25 +50,18 @@ def create_config_params(df):
 
 
 def data_binning(df, q=5, precision=0, path_df_binned=None, create_mapping=True, path_mapping=None, config_params=None,
-                 nulls_ratio=0.2, binning_method='default', print_process=True):
+                 nulls_ratio=0.2, binning_method='default', print_process=False):
     mapping = []
     count_null_cols = 0
     if config_params is None:
         if print_process:
-            print('created config params')
+            print("created config params")
         config_params = create_config_params(df)
     num_rows = df.shape[0]
-    for col in config_params['cols_to_bin']:
-        include_nulls = False
-        if df[df[col].isna()].shape[0] / df.shape[0] < nulls_ratio and df[df[col].isna()].shape[0] >0:
-            include_nulls = True
-            if print_process:
-                print("column {} has null values that would be taken into consideration".format(col))
-                print(include_nulls)
-                count_null_cols +=1
+    for col in config_params['cols_to_bin']:  
         if binning_method == 'default':
             if print_process:
-                print("default binning method")
+                print("default binning")
             if df[col].nunique() > num_rows * 0.8:
                 q = 8
             elif df[col].nunique() > num_rows * 0.6:
@@ -84,10 +77,14 @@ def data_binning(df, q=5, precision=0, path_df_binned=None, create_mapping=True,
         num_of_labels = df_binned.nunique()
         df[col] = pd.qcut(df[col], q=q, labels=[str(col) + "_" + str(x) for x in range(0, num_of_labels)],
                           precision=precision, duplicates='drop')
-        if include_nulls:
+        include_nulls = False
+        if df[df[col].isna()].shape[0] / df.shape[0] < nulls_ratio and df[df[col].isna()].shape[0] >0:
             if print_process:
+                print("column {} has null values that would be taken into consideration".format(col))
+                count_null_cols +=1
                 print("transforming column ",col)
             df[col] = df[col].astype('str').replace('nan', str(col) + "_null")
+            include_nulls = True
             if print_process:
                 print("now columns {} has those unique values:".format(col))
                 print(df[col].unique())
@@ -106,11 +103,8 @@ def data_binning(df, q=5, precision=0, path_df_binned=None, create_mapping=True,
     if create_mapping:
         mapping_flat = list(itertools.chain(*mapping))
         mapping_bins_to_values = pd.DataFrame(mapping_flat, columns=['bin', 'orig_column', 'value'])
-
         if path_mapping:
             save_to_csv(mapping_bins_to_values, path_mapping)
-        if print_process:
-            print("we transformed {} cols that had null values".format(count_null_cols))
         return df, mapping_bins_to_values
     if print_process:
         print("we transformed {} cols that had null values".format(count_null_cols))
@@ -180,31 +174,25 @@ def convert_rule_to_df_old(rule, explain_bins_names):
 
 def convert_rule_to_df(rule, explain_bins_names):
     explain_bins_names_temp = explain_bins_names.rename({'bin': 'bin_exp', 'orig_column': 'orig_column_exp'}, axis=1)
-    #print("rule[lhs]")
-    #print(rule['lhs'])
+
     try:
         lht = str(rule['lhs'].iat[0])
 
     except:
         lht = str(rule['lhs'])
     lht = lht.replace('(', '').replace(')', '').replace("'", "").replace(" ", "").split(',')
-    #print(lht)
-    #print("***")
-    #print("rule[rhs]")
-    #print(rule['rhs'])
+
     try:
         rht = str(rule['rhs'].iat[0])
     except:
         rht = str(rule['rhs'])
     rht = rht.replace('(', '').replace(')', '').replace("'", "").replace(" ", "").split(',')
-    #print(rht)
     try:
        
         lst_dct = {lht[i]: str(lht[i + 1]) for i in range(0, len(lht) - 1, 2)}
         rhs_dct = {rht[i]: str(rht[i + 1]) for i in range(0, len(rht) - 1, 2)}
 
     except:
-        #print("except")
         lst_dct = {lht[0]: lht[1]}
         rhs_dct = {rht[0]: rht[1]}
 
@@ -212,7 +200,6 @@ def convert_rule_to_df(rule, explain_bins_names):
     rules_df_format = pd.DataFrame(list(lst_dct.items()), columns=['orig_column', 'bin'])
     
     rules_df_format['bin_comb'] = rules_df_format.apply(lambda x: str(x['orig_column']) + "_" + str(x['bin']), axis=1)
-    #print(rules_df_format)
     if ('min' in explain_bins_names_temp.columns) and ('max' in explain_bins_names_temp.columns):
         temp = rules_df_format.merge(explain_bins_names_temp, left_on=["bin_comb"], right_on=['bin_exp'], how='left')[
             ['orig_column', 'bin', 'value', 'min', 'max']]
@@ -242,16 +229,11 @@ def deal_with_null_value(col_of_rule, df_reduced_cols, filtered_df):
 
 
 def filter_table_with_rule(rule, explain_bins_names, df):
-    #print("__________")
-    #print("rule_id ")
-    #print(rule.rule_id)
-    #print(rule['itemset'])
+
     rule_df_explained = convert_rule_to_df(rule, explain_bins_names)
     filtered_df = pd.DataFrame()
-    #print(set(rule_df_explained['orig_column'].unique()))
-    #print(set(df.columns))
+
     if not set(rule_df_explained['orig_column'].unique()).issubset(set(df.columns)):
-        #print("the rule isn't relevant")
         return filtered_df
 
     if 'index' not in df.columns:
@@ -318,7 +300,7 @@ def calculate_all_actions(action_df):
         
 def project_summary_on_ar(rules, summary, explain_bins_names, min_num_rep_summary=1):
     filtered_rules = pd.DataFrame()
-    for rule_idx in tqdm(range(0, rules.shape[0])):
+    for rule_idx in range(0, rules.shape[0]):
         rule = rules.iloc[rule_idx]
         rule_df = rules.iloc[[rule_idx]]
         filtered_sum = filter_table_with_rule(rule, explain_bins_names, summary)
@@ -340,7 +322,7 @@ def find_coverage(rules, explain_bins_names, df):
     if 'index' not in df.columns:
         df = df.reset_index()
     print("finding coverage for each rule in the given dataframe")
-    for rule_idx in tqdm(rules.index):
+    for rule_idx in rules.index:
         rule = rules.loc[rule_idx]
         filtered_df = filter_table_with_rule(rule, explain_bins_names, df)
         if filtered_df.shape[0] > 0:
@@ -357,7 +339,7 @@ def create_transactions(df, col_to_separate=None):
             df_per_bin = df[df[col_to_separate] == bin_val]  # .drop([col_to_separate], axis=1)
             df_per_bin = comp_notnull1(df_per_bin)
             transaction_bin = []
-            for r in tqdm(df_per_bin):
+            for r in df_per_bin:
                 transaction_bin.append(list(r.items()))
             transactions_dict[bin_val] = transaction_bin
 
@@ -393,7 +375,7 @@ def create_rules_from_transactions(transactions, support_dict, confidence_dict, 
                                       min_confidence=confidence_dict[bin_value])
             attrs = [a for a in dir(rules[0]) if not a.startswith("_")]
             rules_rec = []
-            for r in tqdm(rules):
+            for r in rules:
                 rdict = {}
                 for a in attrs:
                     rdict[a] = getattr(r, a)
@@ -415,7 +397,7 @@ def create_rules_from_transactions(transactions, support_dict, confidence_dict, 
         itemsets, rules = apriori(transactions, min_support=support_dict, min_confidence=confidence_dict)
         attrs = [a for a in dir(rules[0]) if not a.startswith("_")]
         rules_rec = []
-        for r in tqdm(rules):
+        for r in rules:
             rdict = {}
             for a in attrs:
                 rdict[a] = getattr(r, a)
@@ -553,13 +535,12 @@ def find_rules_from_df1_without_df2(df1, df2, col_to_compare, col_idx='rule_id')
     for val in df1[col_to_compare]:
         if df2[df2[col_to_compare] == val].shape[0] == 0:
             rules_unique.append(df1[df1[col_to_compare] == val][col_idx].iat[0])
-    print(rules_unique)
     return df1[df1[col_idx].isin(rules_unique)]
 
 
 def remove_redundant_itemset(df, col_name='rule', col_name_itemset='itemset'):
     idx = 0
-    for itemset in tqdm(df[col_name]):
+    for itemset in df[col_name]:
         lst_items = itemset.split('),')
         sorted_list = []
         for item in lst_items:
@@ -649,27 +630,34 @@ def create_association_rules(df, prefix_ar, support_dict=0.1, confidence_dict=0.
     path_list = prefix_ar + '/sup_{sup}_con_{con}_list.csv'.format(sup=str(support_dict), con=str(confidence_dict))
     if print_results:
         print("started computing association rules")
-    if col_to_separate:
+
+    if col_to_separate is not None:
+        if type(col_to_separate)==list and len(col_to_separate)==1 and col_to_separate[0] in list(df.columns):
+            col_to_separate = col_to_separate[0]
+        elif type(col_to_separate)==str and col_to_separate in list(df.columns):
+            col_to_separate = col_to_separate
+        else:
+            col_to_separate =None
+
+    if col_to_separate is not None:
         if print_results:
             print("computing association rules with goal column")
 
         confidence_dict, support_dict = transform_single_value_to_dict(confidence_dict, support_dict,
-                                                                       df_col_to_separate_bins=df[
-                                                                           col_to_separate].unique())
-
+                                                                       df_col_to_separate_bins=df[col_to_separate].unique())
         list_of_transactions = create_transactions(df, col_to_separate=col_to_separate)
         if print_results:
             print("finished creating transactions")
 
         rules_per_group = create_rules_from_transactions(transactions=list_of_transactions, support_dict=support_dict,
                                                          confidence_dict=confidence_dict, path=path_list)
+
         if print_results:
             print("finished creating rules per value of the goal colunm")
         rules = concat_and_filter_rules(rules_per_group, path=path_concat_rules)
         if print_results:
             print("finished final filtering of the rules")
-
-    else:
+    else:    
         if print_results:
             print("computing association rules without goal column")
         transactions = create_transactions(df, col_to_separate=col_to_separate)
@@ -691,7 +679,6 @@ def create_association_rules(df, prefix_ar, support_dict=0.1, confidence_dict=0.
     if print_results:
         print("transforming to itemset and removing redundant rules")
     rules_itemset = display_as_itemset(rules, col_name='rule', col_name_itemset='itemset')
-    # rules_itemset_uni = remove_redundant_itemset(rules_itemset, col_name='rule', col_name_itemset='itemset')
     if name_idx_rule not in rules_itemset.columns:
         rules_itemset = rules_itemset.reset_index().rename({'index': name_idx_rule}, axis=1)
     else:

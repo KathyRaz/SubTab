@@ -40,7 +40,6 @@ def data_transformation(df, MODEL_UUID, name_dataset, prefix, q=5, precision=0, 
                         create_mapping=True, path_mapping=None, config_params=None, size_df=100000, nulls_ratio=0.2,
                         portion_of_unique_values=16, save_data=False, print_time=True, binning_method='default'):
     if print_time:
-        print("data_binning")
         start_bin = timer()
     dataset_full, mapping_bins_to_values = data_binning(df.copy(), q=q, precision=precision,
                                                         path_df_binned=path_df_binned,
@@ -406,8 +405,18 @@ def create_summary(full_df, vec_list_w2v_rows, vec_list_w2v_cols=None, clusterin
             print(
                 "for selecting_rows_and_columns, it took {}".format(timedelta(seconds=end_cols_rows - start_cols_rows)))
         return summary_w2v_wo_bins_all_columns
+    columns_list_for_cluster = list(full_df.columns)
     if goal_column is not None:
-        vec_list_w2v_cols = vec_list_w2v_cols
+        n_clusters = n_clusters-len(goal_column)
+        if type(goal_column) == list:
+            
+            for gc in goal_column:
+                columns_list_for_cluster.remove(gc)
+                vec_list_w2v_cols = np.delete(vec_list_w2v_cols,list(full_df.columns).index(gc),0)
+        else:
+            goal_column = [goal_column]
+            vec_list_w2v_cols =  np.delete(vec_list_w2v_cols,list(full_df.columns).index(goal_column[0]),0)
+        
 
     if clustering_algo == 'KMeans':
         model_cols = KMeans(n_clusters=n_clusters, random_state=0).fit(vec_list_w2v_cols)
@@ -416,8 +425,13 @@ def create_summary(full_df, vec_list_w2v_rows, vec_list_w2v_cols=None, clusterin
     for c in centroids_cols:
         idx = np.argmin(np.linalg.norm(c - vec_list_w2v_cols, axis=1))
         summary_idx_w2v_cols.append(idx)
-
-    summary_w2v_wo_bins = summary_w2v_wo_bins_all_columns.iloc[:, summary_idx_w2v_cols]
+    names_of_columns_for_summary = []
+    for cc in summary_idx_w2v_cols:
+        names_of_columns_for_summary.append(columns_list_for_cluster[cc])
+    if goal_column is not None:
+        for gc in goal_column:
+            names_of_columns_for_summary.append(gc)
+    summary_w2v_wo_bins = summary_w2v_wo_bins_all_columns[names_of_columns_for_summary]
     if print_time:
         end_cols_rows = timer()
         print("for selecting_rows_and_columns, it took {}".format(timedelta(seconds=end_cols_rows - start_cols_rows)))
@@ -508,7 +522,7 @@ def create_summary_for_filtered_dataset(prefix, MODEL_UUID, name_dataset, filter
 
 
 def create_summary_for_filtered_dataset_memory(dataset, cell_dict, w2v_model, filtered_df, clustering_algo='KMeans',
-                                               take_nulls=False,
+                                               take_nulls=False, must_column = [],
                                                n_clusters=7):
     start_filter_sum = timer()
     try:
@@ -538,7 +552,12 @@ def create_summary_for_filtered_dataset_memory(dataset, cell_dict, w2v_model, fi
     end_filter_sum = timer()
     print("for creating new table vectors, it took {}".format(timedelta(seconds=end_filter_sum - start_filter_sum)))
     start_cols_rows = timer()
-    summary_w2v_wo_bins_filtered = create_summary(filtered_df, vec_list_w2v_rows_filtered,
+    if len(must_column)>0:
+        summary_w2v_wo_bins_filtered = create_summary(filtered_df, vec_list_w2v_rows_filtered,
+                                                  vec_list_w2v_cols=vec_list_w2v_cols_filtered,
+                                                  clustering_algo=clustering_algo, n_clusters=n_clusters, goal_column=must_column)
+    else:
+        summary_w2v_wo_bins_filtered = create_summary(filtered_df, vec_list_w2v_rows_filtered,
                                                   vec_list_w2v_cols=vec_list_w2v_cols_filtered,
                                                   clustering_algo=clustering_algo, n_clusters=n_clusters)
 
