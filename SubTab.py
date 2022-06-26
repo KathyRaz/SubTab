@@ -1,18 +1,19 @@
-import pandas as pd
+import ast
 import os
-import time
+import random
+import uuid
 from datetime import timedelta
 from timeit import default_timer as timer
+
+import pandas as pd
 from IPython.display import display
-from associations_rules_summary.utils_code import color_and_hover_summary, project_summary_on_ar, create_association_rules
-from word2vec_embedding.utils_w2v import data_transformation, create_summary_for_filtered_dataset, \
-    create_tab_vec_with_emb, create_summary, create_summary_for_filtered_dataset_memory
-from metrics import jaccard_metric, cell_coverage_counting
-import random
-import ast
-import uuid
-import os
 from tqdm import tqdm
+
+from associations_rules_summary.utils_code import color_and_hover_summary, project_summary_on_ar, \
+    create_association_rules
+from metrics import jaccard_metric, cell_coverage_counting
+from word2vec_embedding.utils_w2v import data_transformation, create_tab_vec_with_emb, create_summary, \
+    create_summary_for_filtered_dataset_memory
 
 BASE_DIR = "models/"
 
@@ -36,7 +37,6 @@ def gen_dir(model_uuid, added, base_dir='None'):
     if not os.path.isdir(new_dir):
         os.makedirs(new_dir)
     return new_dir
-
 
 
 def create_filtered_rules_per_row(summary, rules, mapping_bins_to_values):
@@ -70,7 +70,7 @@ def create_rule_text(rule, mapping_bins_to_values):
         try:
             if e[1] in list(mapping_bins_to_values['bin'].unique()):
                 e1 = e[0]
-                e2 = str(mapping_bins_to_values[mapping_bins_to_values['bin']==e[1]]['value'].iat[0])
+                e2 = str(mapping_bins_to_values[mapping_bins_to_values['bin'] == e[1]]['value'].iat[0])
             else:
                 e1 = e[0]
                 e2 = e[1]
@@ -144,7 +144,6 @@ def create_dict_patterns(summary, rules, mapping_bins_to_values, df):
         for rule_id in all_filtered_rules[row_id].rule_id.unique():
             if rule_for_row == 0:
                 if rule_id not in used_rules:
-
                     used_rules.append(rule_id)
                     rule_for_row = 1
                     rule = all_filtered_rules[row_id][all_filtered_rules[row_id].rule_id == rule_id]
@@ -157,7 +156,7 @@ def create_dict_patterns(summary, rules, mapping_bins_to_values, df):
 
         if rule_for_row == 0:
             pass
-            #print("couldn't find matching rule for row number ", row_id)
+            # print("couldn't find matching rule for row number ", row_id)
 
     dict_patterns = {'order_columns': list(summary.columns),
                      'idx_summary': list(summary.index),
@@ -250,7 +249,7 @@ class subTab:
                                                                                         MODEL_UUID=self.model_uuid,
                                                                                         name_dataset=self.name_dataset,
                                                                                         prefix=self.prefix,
-                                                                                        q=5,trim_rows=True,
+                                                                                        q=5, trim_rows=True,
                                                                                         precision=0,
                                                                                         path_df_binned=None,
                                                                                         trim_multi_val_col=True,
@@ -270,7 +269,7 @@ class subTab:
             MODEL_UUID=self.model_uuid,
             name_dataset=self.name_dataset, prefix=self.prefix)
 
-    def display(self, df, clustering_algo='KMeans', pivot_columns = []):
+    def display(self, df, clustering_algo='KMeans', pivot_columns=[]):
         start_cols_rows = timer()
 
         if df.equals(self.df):
@@ -281,42 +280,55 @@ class subTab:
             a = df.index
             b = self.full_df.index
             df = df.loc[list(set(b).intersection(set(a)))]
-            if len(pivot_columns)>0:
-                exp_summary = create_summary_for_filtered_dataset_memory(filtered_df=df, clustering_algo=clustering_algo,
-                                                                     n_clusters=self.num_cols, dataset=self.binned_df,
-                                                                     cell_dict=self.corpus_tuple[2],
-                                                                     take_nulls=self.take_nulls,
-                                                                     w2v_model=self.model, must_column= pivot_columns)
+            if len(pivot_columns) > 0:
+                exp_summary = create_summary_for_filtered_dataset_memory(filtered_df=df,
+                                                                         clustering_algo=clustering_algo,
+                                                                         n_clusters=self.num_cols,
+                                                                         dataset=self.binned_df,
+                                                                         cell_dict=self.corpus_tuple[2],
+                                                                         take_nulls=self.take_nulls,
+                                                                         w2v_model=self.model,
+                                                                         must_column=pivot_columns)
             else:
-                exp_summary = create_summary_for_filtered_dataset_memory(filtered_df=df, clustering_algo=clustering_algo,
-                                                                     n_clusters=self.num_cols, dataset=self.binned_df,
-                                                                     cell_dict=self.corpus_tuple[2],
-                                                                     take_nulls=self.take_nulls,
-                                                                     w2v_model=self.model)
+                exp_summary = create_summary_for_filtered_dataset_memory(filtered_df=df,
+                                                                         clustering_algo=clustering_algo,
+                                                                         n_clusters=self.num_cols,
+                                                                         dataset=self.binned_df,
+                                                                         cell_dict=self.corpus_tuple[2],
+                                                                         take_nulls=self.take_nulls,
+                                                                         w2v_model=self.model)
             if self.rules is not None:
                 print("calculating rules for this dataset")
                 intial_sup = 0.1
-                self.rules = create_association_rules(self.binned_df.loc[list(set(df.index).intersection(set(self.binned_df.index)))][list(exp_summary.columns)], self.prefix, support_dict=intial_sup, confidence_dict=0.6, name_idx_rule='rule_id',
-                             col_to_separate=pivot_columns, print_results=False,)
-                while(self.rules.shape[0]>350):
+                self.rules = create_association_rules(
+                    self.binned_df.loc[list(set(df.index).intersection(set(self.binned_df.index)))][
+                        list(exp_summary.columns)], self.prefix, support_dict=intial_sup, confidence_dict=0.6,
+                    name_idx_rule='rule_id',
+                    col_to_separate=pivot_columns, print_results=False, )
+                while (self.rules.shape[0] > 350):
                     print("calculating again")
-                    intial_sup+=0.05
-                    self.rules = create_association_rules(self.binned_df.loc[list(set(df.index).intersection(set(self.binned_df.index)))][list(exp_summary.columns)], self.prefix, support_dict=intial_sup, confidence_dict=0.6, name_idx_rule='rule_id', col_to_separate=pivot_columns, print_results=False,)
+                    intial_sup += 0.05
+                    self.rules = create_association_rules(
+                        self.binned_df.loc[list(set(df.index).intersection(set(self.binned_df.index)))][
+                            list(exp_summary.columns)], self.prefix, support_dict=intial_sup, confidence_dict=0.6,
+                        name_idx_rule='rule_id', col_to_separate=pivot_columns, print_results=False, )
 
                 print("found {} rules".format(self.rules.shape[0]))
 
-        if self.rules is not None:# summary, rules, mapping_bins_to_values, df
-            dict_patterns = create_dict_patterns(summary=exp_summary, rules=self.rules, mapping_bins_to_values=self.mapping_bins_to_values, df=df)
+        if self.rules is not None:  # summary, rules, mapping_bins_to_values, df
+            dict_patterns = create_dict_patterns(summary=exp_summary, rules=self.rules,
+                                                 mapping_bins_to_values=self.mapping_bins_to_values, df=df)
             dict_eval = dict_patterns['dict_eval']
             rule_dict = dict_patterns['rule_dict']
-            #display(dict_eval)
+            # display(dict_eval)
             end_cols_rows = timer()
             print("for or summary creation, it took {}".format(timedelta(seconds=end_cols_rows - start_cols_rows)))
-            if len(self.created_summaries)>0:
-                if len(list(set(dict_patterns['order_columns'])-set(self.created_summaries[-1].columns)))>0:
-                    print("added the following columns instead of the previously displayed as they are more informative for this dataset")
-                    print(set(dict_patterns['order_columns'])-set(self.created_summaries[-1].columns))
-                
+            if len(self.created_summaries) > 0:
+                if len(list(set(dict_patterns['order_columns']) - set(self.created_summaries[-1].columns))) > 0:
+                    print("added the following columns instead of the previously "
+                          "displayed as they are more informative for this dataset")
+                    print(set(dict_patterns['order_columns']) - set(self.created_summaries[-1].columns))
+
             self.created_summaries.append(exp_summary[dict_patterns['order_columns']].round(2))
             df1 = color_and_hover_summary(exp_summary[dict_patterns['order_columns']].round(2),
                                           dict_patterns['rule_dict'])

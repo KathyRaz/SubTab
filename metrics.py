@@ -1,20 +1,13 @@
-import pandas as pd
 from sklearn.metrics import jaccard_score
 from scipy.spatial import distance
 from math import log2
-from tqdm import tqdm
-from itertools import chain
 
 from associations_rules_summary.utils_code import *
 from Random_baselines.random_util import *
 
 
-import json
-
-
 def evaluate_summary(summary, rules, mapping_bin_values, full_df, metrics=None):
-
-    if metrics == None:
+    if metrics is None:
         metrics = ['naive', 'naive_norm', 'cell_cov', 'num_rules', 'num_bins', 'jaccard']  # 'covariance','cross-ent']
     dict_scores = {}
     filtered_rules = project_summary_on_ar(rules, summary, mapping_bin_values)
@@ -131,17 +124,17 @@ def normalized_score_coverage(dict_coverage, rules, df_total_num_rows):
     score = 0
     # if 'rule_id' not in rules:
     #     rules_updated = rules.reset_index().copy()
-    #     print("reseted index")
+    #     print("rested index")
     # else:
     rules_updated = rules.copy()
 
     rules_sorted = list(rules_updated.sort_values('len_l', ascending=False).index)
-    maxsum = 0
+    max_sum = 0
     # find maximum length of a rule:
     for rule_num in tqdm(rules_updated.index):
         current_sum = rules_updated.loc[rule_num, 'len_l'] + rules_updated.loc[rule_num, 'len_r']
-        if current_sum > maxsum:
-            maxsum = current_sum
+        if current_sum > max_sum:
+            max_sum = current_sum
 
     for rule_num in tqdm(rules_sorted):
         if rule_num in dict_coverage.keys():
@@ -158,7 +151,7 @@ def normalized_score_coverage(dict_coverage, rules, df_total_num_rows):
             rules_updated.loc[rule_num, 'prev_score'] = prev_score
             rules_updated.loc[rule_num, 'delta_score'] = score - prev_score
             set_index = set_index.union(row_numbers)
-    div_factor = df_total_num_rows * maxsum
+    div_factor = df_total_num_rows * max_sum
     final_score = round(score / div_factor, ndigits=2)
     if final_score == 0:
         return 0, pd.DataFrame(columns=["rule_id", "num_rows_sup", "cumulative_score", "prev_score", "delta_score"])
@@ -176,20 +169,20 @@ def interestingness_bins_count_score(mapping_bin_values, full_df, summary):
 
         if map_df.shape[0] > 0:  # column was binned:
             bin_value_col = map_df['value']
-            num_bins = bin_value_col.shape[0] # all possible bins
+            num_bins = bin_value_col.shape[0]  # all possible bins
             for bin_interval_idx in range(0, bin_value_col.shape[0]):
                 bin_name = map_df['bin'].iat[bin_interval_idx]
                 if '_null' not in bin_name:
-                    temp = str(bin_value_col.iat[bin_interval_idx]).replace('(', '').replace(']', '').replace(' ', '').split(',')
+                    temp = str(bin_value_col.iat[bin_interval_idx]).replace('(', '') \
+                        .replace(']', '').replace(' ', '').split(',')
                     iv = pd.Interval(left=float(temp[0]), right=float(temp[1]), closed='right')
                     for uni_val in unique_vals:
                         if uni_val in iv:
                             if map_df['bin'].iat[bin_interval_idx] not in bins_represented_col:
                                 bins_represented_col.append(bin_name)
                 else:
-                    if summary[summary[col].isna()].shape[0]>0 and bin_name not in bins_represented_col:
+                    if summary[summary[col].isna()].shape[0] > 0 and bin_name not in bins_represented_col:
                         bins_represented_col.append(bin_name)
-
 
         else:
             num_bins = full_df[col].nunique()
@@ -223,7 +216,7 @@ def jaccard_metric(summary, full_df=None, mapping_bin_values=None, bin_transform
         for j in range(0, summary.shape[0]):
             sum_jaccarad += jaccard_score(np.array(summary.iloc[i]), np.array(summary.iloc[j]), average='micro')
 
-    return (sum_jaccarad / (summary.shape[0] ** 2))
+    return sum_jaccarad / (summary.shape[0] ** 2)
 
 
 def covariance_metric(summary, full_df):

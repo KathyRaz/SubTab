@@ -1,17 +1,16 @@
-import pandas as pd
+import ast
 import os
-import time
+import random
+import uuid
 from datetime import timedelta
 from timeit import default_timer as timer
+
+import pandas as pd
 from IPython.display import display
+
 from associations_rules_summary.utils_code import color_and_hover_summary, project_summary_on_ar
-from word2vec_embedding.utils_w2v import data_transformation, create_summary_for_filtered_dataset, \
+from word2vec_embedding.utils_w2v import data_transformation, \
     create_tab_vec_with_emb, create_summary, create_summary_for_filtered_dataset_memory
-from metrics import jaccard_metric, cell_coverage_counting
-import random
-import ast
-import uuid
-import os
 
 BASE_DIR = "models/"
 
@@ -35,7 +34,6 @@ def gen_dir(model_uuid, added, base_dir='None'):
     if not os.path.isdir(new_dir):
         os.makedirs(new_dir)
     return new_dir
-
 
 
 def create_filtered_rules_per_row(summary, rules, mapping_bins_to_values):
@@ -119,6 +117,7 @@ def create_rule_index(rule, row_id, order_columns):
 
 
 def create_dict_patterns(summary, rules, mapping_bins_to_values, df):
+    from metrics import jaccard_metric, cell_coverage_counting
     # print("create dict patterns")
     possible_colors = ['green', 'blue', 'yellow', 'red', 'orange', 'pink', 'lightblue', 'purple', 'gray', 'darkgrey']
     order_columns = list(summary.columns)
@@ -159,7 +158,7 @@ def create_dict_patterns(summary, rules, mapping_bins_to_values, df):
     return dict_patterns
 
 
-class subTub:
+class SubTub:
     """
     the class that holds SubTub instance. It load a dataframe, creates a binning transformation, and then creates
     embedding based on the requested method. it stores the columns and rows vectors. it has a function of display to
