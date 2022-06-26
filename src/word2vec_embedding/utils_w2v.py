@@ -7,10 +7,9 @@ from sklearn.metrics.pairwise import euclidean_distances
 import sys
 import warnings
 
-sys.path.append('../../')
-from associations_rules_summary.utils_code import data_binning
+sys.path.append('../../../')
+from src.associations_rules_summary.utils_code import data_binning
 # from general import gen_model_uuid, gen_dir
-import os
 
 from timeit import default_timer as timer
 from datetime import timedelta
@@ -20,7 +19,6 @@ import random
 import uuid
 import os
 # import utils.config
-from collections import Counter
 
 BASE_DIR = "models/"
 
@@ -53,9 +51,9 @@ def data_transformation(df, MODEL_UUID, name_dataset, prefix, q=5, precision=0, 
         columns_to_select = list(dataset_full.columns)
         for col in dataset_full.columns:
             num = dataset_full[col].nunique()
-            if num > num_of_rows / portion_of_unique_values:  # there are to few representative per value in a column
+            if num > num_of_rows / portion_of_unique_values:  # there are too few representative per value in a column
                 columns_to_select.remove(col)
-            elif num == 1 and dataset_full[col].isna().any() == False:  # there is only one value in the column
+            elif num == 1 and not dataset_full[col].isna().any():  # there is only one value in the column
                 columns_to_select.remove(col)
 
     else:
@@ -313,7 +311,7 @@ def find_closest_row(c, vec_list):
 
 
 def create_tab_vec_with_emb(dataset, config_params, CONF, MODEL_UUID, name_dataset, prefix, save_file=False,
-                            print_time=False):
+                            print_time=True):
     if print_time:
         print("table vectorization")
         start_tab_vec = timer()
@@ -407,16 +405,15 @@ def create_summary(full_df, vec_list_w2v_rows, vec_list_w2v_cols=None, clusterin
         return summary_w2v_wo_bins_all_columns
     columns_list_for_cluster = list(full_df.columns)
     if goal_column is not None:
-        n_clusters = n_clusters-len(goal_column)
+        n_clusters = n_clusters - len(goal_column)
         if type(goal_column) == list:
-            
+
             for gc in goal_column:
                 columns_list_for_cluster.remove(gc)
-                vec_list_w2v_cols = np.delete(vec_list_w2v_cols,list(full_df.columns).index(gc),0)
+                vec_list_w2v_cols = np.delete(vec_list_w2v_cols, list(full_df.columns).index(gc), 0)
         else:
             goal_column = [goal_column]
-            vec_list_w2v_cols =  np.delete(vec_list_w2v_cols,list(full_df.columns).index(goal_column[0]),0)
-        
+            vec_list_w2v_cols = np.delete(vec_list_w2v_cols, list(full_df.columns).index(goal_column[0]), 0)
 
     if clustering_algo == 'KMeans':
         model_cols = KMeans(n_clusters=n_clusters, random_state=0).fit(vec_list_w2v_cols)
@@ -522,7 +519,7 @@ def create_summary_for_filtered_dataset(prefix, MODEL_UUID, name_dataset, filter
 
 
 def create_summary_for_filtered_dataset_memory(dataset, cell_dict, w2v_model, filtered_df, clustering_algo='KMeans',
-                                               take_nulls=False, must_column = [],
+                                               take_nulls=False, must_column=[],
                                                n_clusters=7):
     start_filter_sum = timer()
     try:
@@ -552,14 +549,15 @@ def create_summary_for_filtered_dataset_memory(dataset, cell_dict, w2v_model, fi
     end_filter_sum = timer()
     print("for creating new table vectors, it took {}".format(timedelta(seconds=end_filter_sum - start_filter_sum)))
     start_cols_rows = timer()
-    if len(must_column)>0:
+    if len(must_column) > 0:
         summary_w2v_wo_bins_filtered = create_summary(filtered_df, vec_list_w2v_rows_filtered,
-                                                  vec_list_w2v_cols=vec_list_w2v_cols_filtered,
-                                                  clustering_algo=clustering_algo, n_clusters=n_clusters, goal_column=must_column)
+                                                      vec_list_w2v_cols=vec_list_w2v_cols_filtered,
+                                                      clustering_algo=clustering_algo, n_clusters=n_clusters,
+                                                      goal_column=must_column)
     else:
         summary_w2v_wo_bins_filtered = create_summary(filtered_df, vec_list_w2v_rows_filtered,
-                                                  vec_list_w2v_cols=vec_list_w2v_cols_filtered,
-                                                  clustering_algo=clustering_algo, n_clusters=n_clusters)
+                                                      vec_list_w2v_cols=vec_list_w2v_cols_filtered,
+                                                      clustering_algo=clustering_algo, n_clusters=n_clusters)
 
     end_cols_rows = timer()
     print("for summary creation, it took {}".format(timedelta(seconds=end_cols_rows - start_cols_rows)))

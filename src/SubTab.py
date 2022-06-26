@@ -258,7 +258,7 @@ class subTab:
                                                                                         config_params=None,
                                                                                         nulls_ratio=self.null_ratio,
                                                                                         binning_method='custom',
-                                                                                        print_time=False)
+                                                                                        print_time=True)
 
         # embbeding:
 

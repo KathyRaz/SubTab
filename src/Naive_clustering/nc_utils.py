@@ -1,9 +1,9 @@
 from sklearn.preprocessing import LabelEncoder
 import uuid
-from word2vec_embedding.utils_w2v import data_transformation
 from sklearn.cluster import KMeans
 import numpy as np
-import random
+
+
 def gen_model_uuid(label=None):
     uu = uuid.uuid4().hex
     # os.path.join(
