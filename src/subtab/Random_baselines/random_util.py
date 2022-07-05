@@ -1,5 +1,5 @@
 import random
-from src.associations_rules_summary.utils_code import color_and_hover_summary
+from subtab.associations_rules_summary.utils_code import color_and_hover_summary
 
 
 def generate_random_summary(df, num_cols=10, num_rows=10, must_have_column=None):
@@ -15,7 +15,7 @@ def generate_random_summary(df, num_cols=10, num_rows=10, must_have_column=None)
 
 
 def color_random_summary(summary, rules, mapping_bins_to_values, df):
-    from src.SubTab import create_dict_patterns
+    from subtab.SubTab import create_dict_patterns
     dict_patterns = create_dict_patterns(summary=summary, rules=rules, mapping_bins_to_values=mapping_bins_to_values,
                                          df=df)
     df1 = color_and_hover_summary(summary[dict_patterns['order_columns']].round(2),

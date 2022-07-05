@@ -7,8 +7,8 @@ from sklearn.metrics.pairwise import euclidean_distances
 import sys
 import warnings
 
-sys.path.append('../../../')
-from src.associations_rules_summary.utils_code import data_binning
+sys.path.append('../../../../')
+from subtab.associations_rules_summary.utils_code import data_binning
 # from general import gen_model_uuid, gen_dir
 
 from timeit import default_timer as timer

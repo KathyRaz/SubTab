@@ -2,8 +2,8 @@ from sklearn.metrics import jaccard_score
 from scipy.spatial import distance
 from math import log2
 
-from src.associations_rules_summary.utils_code import *
-from src.Random_baselines.random_util import *
+from subtab.associations_rules_summary.utils_code import *
+from subtab.Random_baselines.random_util import *
 
 
 def evaluate_summary(summary, rules, mapping_bin_values, full_df, metrics=None):
