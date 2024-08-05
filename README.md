@@ -7,7 +7,18 @@ We use association rules as the patterns captured by sub-tables, and show that c
 is infeasible. We then develop an efficient algorithm that indirectly accounts for association rules using table embedding. The resulting framework produces sub-tables for the full table as well as for the results of queries over the table, enabling the user to quickly understand results and determine subsequent queries. Experimental results show that high-quality sub-tables can be efficiently computed,and verify the soundness of our metrics as well as the usefulness of selected sub-tables through user studies.
 
 
-The implemention of the following paper: 
-https://arxiv.org/abs/2203.02754
+The implemention of the following [paper](https://ieeexplore.ieee.org/document/10184535). 
+
+Please cite this work as follows:
+@INPROCEEDINGS{10184535,
+  author={Amsterdamer, Yael and Davidson, Susan B. and Milo, Tova and Razmadze, Kathy and Somech, Amit},
+  booktitle={2023 IEEE 39th International Conference on Data Engineering (ICDE)}, 
+  title={Selecting Sub-tables for Data Exploration}, 
+  year={2023},
+  volume={},
+  number={},
+  pages={2496-2509},
+  keywords={Measurement;Data engineering;Interactive data exploration and discovery},
+  doi={10.1109/ICDE55515.2023.00192}}
 
 An example of the usage is available in the file example.ipynb
