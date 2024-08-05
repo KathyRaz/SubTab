@@ -10,6 +10,7 @@ is infeasible. We then develop an efficient algorithm that indirectly accounts f
 The implemention of the following [paper](https://ieeexplore.ieee.org/document/10184535). 
 
 Please cite this work as follows:
+
 @INPROCEEDINGS{10184535,
   author={Amsterdamer, Yael and Davidson, Susan B. and Milo, Tova and Razmadze, Kathy and Somech, Amit},
   booktitle={2023 IEEE 39th International Conference on Data Engineering (ICDE)}, 
