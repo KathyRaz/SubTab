@@ -10,15 +10,13 @@ is infeasible. We then develop an efficient algorithm that indirectly accounts f
 The implemention of the following [paper](https://ieeexplore.ieee.org/document/10184535). 
 
 Please cite this work as follows:
-@INPROCEEDINGS{10184535,
-  author={Amsterdamer, Yael and Davidson, Susan B. and Milo, Tova and Razmadze, Kathy and Somech, Amit},
-  booktitle={2023 IEEE 39th International Conference on Data Engineering (ICDE)}, 
-  title={Selecting Sub-tables for Data Exploration}, 
-  year={2023},
-  volume={},
-  number={},
-  pages={2496-2509},
-  keywords={Measurement;Data engineering;Interactive data exploration and discovery},
-  doi={10.1109/ICDE55515.2023.00192}}
 
+@inproceedings{amsterdamer2023selecting,
+  title={Selecting Sub-tables for Data Exploration},
+  author={Amsterdamer, Yael and Davidson, Susan B and Milo, Tova and Razmadze, Kathy and Somech, Amit},
+  booktitle={2023 IEEE 39th International Conference on Data Engineering (ICDE)},
+  pages={2496--2509},
+  year={2023},
+  organization={IEEE}
+}
 An example of the usage is available in the file example.ipynb
